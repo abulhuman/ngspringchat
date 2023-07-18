@@ -1,25 +1,31 @@
 package com.company.ngspringchat.chat.entities;
 
 import com.company.ngspringchat.chat.entities.shared.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Null;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "Room")
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@RequiredArgsConstructor
+@NoArgsConstructor(force = true)
 public class Room extends BaseEntity {
     @Column(unique = true)
-    private String name;
-    private String description;
-    private String icon;
-    private String color;
+
+    private final String name;
+    private final String description;
+    private final String icon;
+    private final String color;
+
+    @OneToMany(mappedBy = "room", fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List<Message> messages;
 
     public Room(UUID uuid, String name, String description, String icon, String color) {
         super(uuid);

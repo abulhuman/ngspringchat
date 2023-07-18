@@ -2,17 +2,16 @@ package com.company.ngspringchat.chat.entities.shared;
 
 import jakarta.persistence.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @MappedSuperclass
-@Data
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 public abstract class BaseEntity {
     @Id

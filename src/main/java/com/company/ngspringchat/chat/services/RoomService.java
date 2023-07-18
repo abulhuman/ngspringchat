@@ -2,8 +2,6 @@ package com.company.ngspringchat.chat.services;
 
 import com.company.ngspringchat.chat.entities.Room;
 import com.company.ngspringchat.chat.repositories.RoomRepository;
-import jakarta.persistence.Persistence;
-import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,8 +28,8 @@ public class RoomService {
         return roomRepository.findById(id).orElseThrow(() -> new HttpClientErrorException(HttpStatus.NOT_FOUND));
     }
 
-    public boolean roomExistsById(UUID id) {
-        return roomRepository.existsById(id);
+    public boolean doesNotExistById(UUID id) {
+        return !roomRepository.existsById(id);
     }
 
     public Room createRoom(Room room) {

@@ -1,6 +1,8 @@
 package com.company.ngspringchat.chat.controllers;
 
 import com.company.ngspringchat.chat.dtos.CreateRoomDto;
+import com.company.ngspringchat.chat.dtos.FetchRoomDetailDto;
+import com.company.ngspringchat.chat.dtos.FetchRoomDto;
 import com.company.ngspringchat.chat.dtos.UpdateRoomDto;
 import com.company.ngspringchat.chat.entities.Room;
 import com.company.ngspringchat.chat.services.RoomService;
@@ -15,9 +17,10 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping(path = "api/v1/rooms")
+@RequestMapping(path = "/rooms")
 @AllArgsConstructor
 public class RoomController {
     @Autowired
@@ -27,13 +30,18 @@ public class RoomController {
     private ModelMapper modelMapper;
 
     @GetMapping
-    List<Room> getRooms() {
-        return roomService.getRooms();
+    List<
+//            Room
+            FetchRoomDto
+            > getRooms() {
+        return roomService.getRooms()
+                .stream().map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping(path = "/{roomId}")
-    Room getRoomById(@PathVariable("roomId") UUID roomId) {
-        return roomService.getRoomById(roomId);
+    FetchRoomDetailDto getRoomById(@PathVariable("roomId") UUID roomId) {
+        return convertToDetailDto(roomService.getRoomById(roomId));
     }
 
     @PostMapping
@@ -50,7 +58,7 @@ public class RoomController {
             @PathVariable("roomId") UUID roomId,
             @Valid @RequestBody UpdateRoomDto updateRoomDto
     ) {
-        if (!roomService.roomExistsById(roomId))
+        if (roomService.doesNotExistById(roomId))
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
         return roomService
                 .updateRoom(convertToEntity(updateRoomDto, roomId));
@@ -59,8 +67,16 @@ public class RoomController {
     @DeleteMapping(path = "/{roomId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRoom(@PathVariable("roomId") UUID roomId) {
-        if (!roomService.roomExistsById(roomId)) throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+        if (roomService.doesNotExistById(roomId)) throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
         roomService.deleteRoom(roomId);
+    }
+
+    private FetchRoomDto convertToDto(Room room) {
+        return modelMapper.map(room, FetchRoomDto.class);
+    }
+
+    private FetchRoomDetailDto convertToDetailDto(Room room) {
+        return modelMapper.map(room, FetchRoomDetailDto.class);
     }
 
     private Room convertToEntity(CreateRoomDto createRoomDto) {
