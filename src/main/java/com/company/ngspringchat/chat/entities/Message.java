@@ -1,5 +1,6 @@
 package com.company.ngspringchat.chat.entities;
 
+import com.company.ngspringchat.chat.dtos.FetchMessageDto;
 import com.company.ngspringchat.chat.entities.shared.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
@@ -7,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.GeneratedColumn;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
@@ -34,4 +34,19 @@ public class Message extends BaseEntity {
     private Room room;
 
 
+    public FetchMessageDto toFetchDto() {
+        return new FetchMessageDto(
+                super.getId(),
+                content,
+                timestamp,
+                sender);
+    }
+
+    public FetchMessageDto toFetchMessageDto() {
+        return new FetchMessageDto(
+                super.getId(),
+                content,
+                timestamp,
+                sender);
+    }
 }

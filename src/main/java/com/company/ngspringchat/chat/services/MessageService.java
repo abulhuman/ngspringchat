@@ -1,18 +1,20 @@
 package com.company.ngspringchat.chat.services;
 
+import com.company.ngspringchat.chat.dtos.CreateMessageDto;
 import com.company.ngspringchat.chat.entities.Message;
 import com.company.ngspringchat.chat.entities.Room;
+import com.company.ngspringchat.chat.repositories.MessageRepository;
 import com.company.ngspringchat.chat.repositories.RoomRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.company.ngspringchat.chat.repositories.MessageRepository;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@AllArgsConstructor
 public class MessageService {
 
     @Autowired
@@ -21,15 +23,19 @@ public class MessageService {
     @Autowired
     public RoomRepository roomRepository;
 
-    public List<Message> getMessagesByRoomId(UUID roomId) {
+
+    public List<Message> getMessagesByRoomId(UUID roomId)
+            throws EntityNotFoundException {
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+                .orElseThrow(EntityNotFoundException::new);
         return room.getMessages();
     }
 
-    public void sendMessage(Message message, UUID roomId) {
+    public void sendMessage(CreateMessageDto createMessageDto, UUID roomId)
+            throws EntityNotFoundException {
+        Message message = createMessageDto.toEntity();
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found"));
+                .orElseThrow(EntityNotFoundException::new);
         message.setRoom(room);
         messageRepository.save(message);
     }

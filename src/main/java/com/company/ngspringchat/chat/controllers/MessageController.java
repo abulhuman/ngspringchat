@@ -1,45 +1,24 @@
 package com.company.ngspringchat.chat.controllers;
 
 import com.company.ngspringchat.chat.dtos.CreateMessageDto;
-import com.company.ngspringchat.chat.entities.Message;
 import com.company.ngspringchat.chat.services.MessageService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path = "/messages")
+@RequestMapping(path = "messages")
 @AllArgsConstructor
 public class MessageController {
     @Autowired
     private final MessageService messageService;
-
-    @Autowired
-    private final ModelMapper modelMapper;
-
-    /**
-     * Get all messages in a room
-     *
-     * @param roomIdParam Room ID
-     * @return List of messages
-     * @Example GET /messages?roomId=123
-     */
-    @GetMapping
-    @ResponseBody
-    @ResponseStatus(HttpStatus.OK)
-    public List<Message> getMessagesByRoomId(
-            @Param("roomIdParam") String roomIdParam
-    ) {
-        UUID roomId = UUID.fromString(roomIdParam);
-        return messageService.getMessagesByRoomId(roomId);
-    }
 
     /**
      * Send a message to a room
@@ -61,11 +40,12 @@ public class MessageController {
             @Param("roomIdParam") String roomIdParam
     ) {
         UUID roomId = UUID.fromString(roomIdParam);
-        Message message = convertToEntity(createMessageDto);
-        messageService.sendMessage(message, roomId);
-    }
-
-    private Message convertToEntity(CreateMessageDto createMessageDto) {
-        return modelMapper.map(createMessageDto, Message.class);
+        try {
+            messageService.sendMessage(createMessageDto, roomId);
+        } catch (EntityNotFoundException e) {
+            throw new HttpClientErrorException(
+                    HttpStatus.NOT_FOUND,
+                    "Room with id: '%s' not found".formatted(roomId));
+        }
     }
 }

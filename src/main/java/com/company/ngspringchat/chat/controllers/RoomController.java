@@ -1,14 +1,13 @@
 package com.company.ngspringchat.chat.controllers;
 
-import com.company.ngspringchat.chat.dtos.CreateRoomDto;
-import com.company.ngspringchat.chat.dtos.FetchRoomDetailDto;
-import com.company.ngspringchat.chat.dtos.FetchRoomDto;
-import com.company.ngspringchat.chat.dtos.UpdateRoomDto;
+import com.company.ngspringchat.chat.dtos.*;
+import com.company.ngspringchat.chat.entities.Message;
 import com.company.ngspringchat.chat.entities.Room;
+import com.company.ngspringchat.chat.services.MessageService;
 import com.company.ngspringchat.chat.services.RoomService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,38 +19,104 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping(path = "/rooms")
+@RequestMapping(path = "rooms")
 @AllArgsConstructor
 public class RoomController {
     @Autowired
     private final RoomService roomService;
 
     @Autowired
-    private ModelMapper modelMapper;
+    private final MessageService messageService;
 
+    /**
+     * Get all rooms
+     *
+     * @return List of rooms
+     * @Example GET /rooms
+     */
     @GetMapping
-    List<
-//            Room
+    public List<
             FetchRoomDto
             > getRooms() {
         return roomService.getRooms()
-                .stream().map(this::convertToDto)
+                .stream().map(Room::toFetchDto)
                 .collect(Collectors.toList());
     }
 
-    @GetMapping(path = "/{roomId}")
-    FetchRoomDetailDto getRoomById(@PathVariable("roomId") UUID roomId) {
-        return convertToDetailDto(roomService.getRoomById(roomId));
+    /**
+     * Get a room by ID
+     *
+     * @param roomId Room ID
+     * @return Room
+     * @Example GET /rooms/00000000-0000-0000-0000-000000000
+     */
+    @GetMapping(path = "{roomId}")
+    public FetchRoomDetailDto getRoomById(@PathVariable("roomId") UUID roomId) {
+        return roomService.getRoomDetailById(roomId)
+                .orElseThrow(() -> new HttpClientErrorException(
+                        HttpStatus.NOT_FOUND,
+                        "Room with id: '%s' not found".formatted(roomId)
+                ));
     }
 
+    /**
+     * Get all messages in a room
+     *
+     * @param roomId Room ID
+     * @return List of messages
+     * @Example GET /rooms/00000000-0000-0000-0000-000000000/messages
+     */
+    @GetMapping(path = "{roomId}/messages")
+    public List<FetchMessageDto> getRoomMessages(@PathVariable("roomId") UUID roomId) {
+
+        List<Message> messages;
+        try {
+            messages = messageService.getMessagesByRoomId(roomId);
+        } catch (EntityNotFoundException e) {
+            throw new HttpClientErrorException(
+                    HttpStatus.NOT_FOUND,
+                    "Room with id: '%s' not found".formatted(roomId));
+        }
+        return messages
+                .stream().map(Message::toFetchMessageDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Create a room
+     *
+     * @param createRoomDto Room to create
+     * @return Created room
+     * @Example POST /rooms
+     * {
+     * "name": "Room 1",
+     * "description": "This is room 1",
+     * "icon": "chat,
+     * "color": "#000000"
+     * }
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public Room createRoom(@Valid @RequestBody CreateRoomDto createRoomDto) {
-        return roomService.createRoom(convertToEntity(createRoomDto));
+    public UUID createRoom(@Valid @RequestBody CreateRoomDto createRoomDto) {
+        return roomService.createRoom(createRoomDto).getId();
     }
 
-    @PutMapping(path = "/{roomId}")
+    /**
+     * Update a room
+     *
+     * @param roomId        Room ID
+     * @param updateRoomDto Room to update
+     * @return Updated room
+     * @Example PUT /rooms/00000000-0000-0000-0000-000000000
+     * {
+     * "name": "Room 1",
+     * "description": "This is room 1",
+     * "icon": "chat",
+     * "color": "#000000"
+     * }
+     */
+    @PutMapping(path = "{roomId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public Room updateRoom(
@@ -59,38 +124,26 @@ public class RoomController {
             @Valid @RequestBody UpdateRoomDto updateRoomDto
     ) {
         if (roomService.doesNotExistById(roomId))
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+            throw new HttpClientErrorException(
+                    HttpStatus.NOT_FOUND,
+                    "Room with id: '%s' not found".formatted(roomId));
         return roomService
-                .updateRoom(convertToEntity(updateRoomDto, roomId));
+                .updateRoom(roomId, updateRoomDto);
     }
 
-    @DeleteMapping(path = "/{roomId}")
+    /**
+     * Delete a room
+     *
+     * @param roomId Room ID
+     * @Example DELETE /rooms/00000000-0000-0000-0000-000000000
+     */
+    @DeleteMapping(path = "{roomId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRoom(@PathVariable("roomId") UUID roomId) {
-        if (roomService.doesNotExistById(roomId)) throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+        if (roomService.doesNotExistById(roomId))
+            throw new HttpClientErrorException(
+                    HttpStatus.NOT_FOUND,
+                    "Room with id: '%s' not found".formatted(roomId));
         roomService.deleteRoom(roomId);
-    }
-
-    private FetchRoomDto convertToDto(Room room) {
-        return modelMapper.map(room, FetchRoomDto.class);
-    }
-
-    private FetchRoomDetailDto convertToDetailDto(Room room) {
-        return modelMapper.map(room, FetchRoomDetailDto.class);
-    }
-
-    private Room convertToEntity(CreateRoomDto createRoomDto) {
-        return modelMapper.map(createRoomDto, Room.class);
-    }
-
-    private Room convertToEntity(UpdateRoomDto updateRoomDto, UUID id) {
-        Room room = roomService.getRoomById(id);
-        if (updateRoomDto.getName() == null) updateRoomDto.setName(room.getName());
-        if (updateRoomDto.getDescription() == null) updateRoomDto.setDescription(room.getDescription());
-        if (updateRoomDto.getIcon() == null) updateRoomDto.setIcon(room.getIcon());
-        if (updateRoomDto.getColor() == null) updateRoomDto.setColor(room.getColor());
-        Room mappedRoom = modelMapper.map(updateRoomDto, Room.class);
-        mappedRoom.setId(id);
-        return mappedRoom;
     }
 }
