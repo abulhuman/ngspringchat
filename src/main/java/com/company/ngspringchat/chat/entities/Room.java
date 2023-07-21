@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ public class Room extends BaseEntity {
     }
 
     public Room(String name, String description, String icon, String color) {
+        this.setId(super.getId());
         this.name = name;
         this.description = description;
         this.icon = icon;
@@ -49,15 +51,20 @@ public class Room extends BaseEntity {
         return new FetchRoomDto(super.getId(), name, description, icon, color);
     }
 
-    public FetchRoomDetailDto toFetchDetailDto() {
-        return new FetchRoomDetailDto(
-                super.getId(),
-                name,
-                description,
-                icon, color,
-                messages.stream()
-                        .map(Message::toFetchDto)
-                        .collect(Collectors.toList()));
+    public Optional<FetchRoomDetailDto> toFetchDetailDto() {
+        boolean hasMessages = messages != null && !messages.isEmpty();
+        return Optional.of(
+                new FetchRoomDetailDto(
+                        super.getId(),
+                        name,
+                        description,
+                        icon, color,
+                        hasMessages ? messages.stream()
+                                        .map(Message::toFetchDto)
+                                        .collect(Collectors.toList())
+                                : List.of()
+                )
+        );
     }
 }
 

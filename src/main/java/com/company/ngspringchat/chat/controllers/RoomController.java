@@ -3,7 +3,6 @@ package com.company.ngspringchat.chat.controllers;
 import com.company.ngspringchat.chat.dtos.*;
 import com.company.ngspringchat.chat.entities.Message;
 import com.company.ngspringchat.chat.entities.Room;
-import com.company.ngspringchat.chat.services.MessageService;
 import com.company.ngspringchat.chat.services.RoomService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
-
 
 import java.util.List;
 import java.util.UUID;
@@ -24,9 +22,6 @@ import java.util.stream.Collectors;
 public class RoomController {
     @Autowired
     private final RoomService roomService;
-
-    @Autowired
-    private final MessageService messageService;
 
     /**
      * Get all rooms
@@ -71,7 +66,7 @@ public class RoomController {
 
         List<Message> messages;
         try {
-            messages = messageService.getMessagesByRoomId(roomId);
+            messages = roomService.getMessages(roomId);
         } catch (EntityNotFoundException e) {
             throw new HttpClientErrorException(
                     HttpStatus.NOT_FOUND,
@@ -99,7 +94,8 @@ public class RoomController {
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
     public UUID createRoom(@Valid @RequestBody CreateRoomDto createRoomDto) {
-        return roomService.createRoom(createRoomDto).getId();
+        Room newRoom = roomService.createRoom(createRoomDto);
+        return newRoom.getId();
     }
 
     /**

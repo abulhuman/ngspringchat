@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 @Table(name = "Message")
 @Getter
 @Setter
-@ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class Message extends BaseEntity {
@@ -48,5 +47,23 @@ public class Message extends BaseEntity {
                 content,
                 timestamp,
                 sender);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Message message)) return false;
+        return content.equals(message.getContent()) &&
+                sender.equals(message.getSender()) &&
+                room.getId().equals(message.getRoom().getId());
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "id=" + super.getId() +
+                ", content='" + content + '\'' +
+                ", sender='" + sender + '\'' +
+                ", room=" + room.getName() +
+                '}';
     }
 }

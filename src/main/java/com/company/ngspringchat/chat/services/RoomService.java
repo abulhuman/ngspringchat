@@ -3,8 +3,10 @@ package com.company.ngspringchat.chat.services;
 import com.company.ngspringchat.chat.dtos.CreateRoomDto;
 import com.company.ngspringchat.chat.dtos.FetchRoomDetailDto;
 import com.company.ngspringchat.chat.dtos.UpdateRoomDto;
+import com.company.ngspringchat.chat.entities.Message;
 import com.company.ngspringchat.chat.entities.Room;
 import com.company.ngspringchat.chat.repositories.RoomRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,18 +20,28 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RoomService {
     @Autowired
-    private final RoomRepository roomRepository;
+    public final RoomRepository roomRepository;
+
+    @Autowired
+    public final MessageService messageService;
 
     public List<Room> getRooms() {
         return roomRepository.findAll();
     }
 
-    public Optional<Room> getRoomById(UUID id) {
+    Optional<Room> getRoomById(UUID id) {
         return roomRepository.findById(id);
     }
 
     public boolean doesNotExistById(UUID id) {
         return !roomRepository.existsById(id);
+    }
+
+    public List<Message> getMessages(UUID roomId)
+            throws EntityNotFoundException {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(EntityNotFoundException::new);
+        return room.getMessages();
     }
 
     public Room createRoom(CreateRoomDto createRoomDto) {
@@ -56,7 +68,8 @@ public class RoomService {
 
     public Optional<FetchRoomDetailDto> getRoomDetailById(UUID roomId) {
         Optional<Room> room = getRoomById(roomId);
-        return room.map(Room::toFetchDetailDto);
+        if (room.isEmpty()) return Optional.empty();
+        return room.get().toFetchDetailDto();
     }
 
 }
