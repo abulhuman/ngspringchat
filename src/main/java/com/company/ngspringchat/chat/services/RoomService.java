@@ -22,9 +22,6 @@ public class RoomService {
     @Autowired
     public final RoomRepository roomRepository;
 
-    @Autowired
-    public final MessageService messageService;
-
     public List<Room> getRooms() {
         return roomRepository.findAll();
     }
@@ -49,9 +46,9 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
-    public Room updateRoom(UUID roomId, UpdateRoomDto updateRoomDto) {
+    public void updateRoom(UUID roomId, UpdateRoomDto updateRoomDto) {
         Optional<Room> room = getRoomById(roomId);
-        if (room.isEmpty()) return null;
+        if (room.isEmpty()) return;
         if (updateRoomDto.getName() == null) updateRoomDto.setName(room.get().getName());
         if (updateRoomDto.getDescription() == null) updateRoomDto.setDescription(room.get().getDescription());
         if (updateRoomDto.getIcon() == null) updateRoomDto.setIcon(room.get().getIcon());
@@ -59,7 +56,7 @@ public class RoomService {
         Room updatedRoom = updateRoomDto.toEntity();
         updatedRoom.setId(roomId);
         updatedRoom.setUpdated_date(LocalDateTime.now());
-        return roomRepository.save(updatedRoom);
+        roomRepository.save(updatedRoom);
     }
 
     public void deleteRoom(UUID roomId) {

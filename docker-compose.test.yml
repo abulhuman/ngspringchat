@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:14.2-alpine
+    restart: unless-stopped
+    ports:
+      - '10000:5432'
+    environment:
+      POSTGRES_DB: source-it
+      POSTGRES_USER: source-it
+      POSTGRES_PASSWORD: source-it
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+
+volumes:
+  postgresql-data:
+    driver: local

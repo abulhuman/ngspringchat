@@ -28,7 +28,7 @@ class RoomServiceTest {
 
     @BeforeEach
     void setUp() {
-        this.testSubject = new RoomService(roomRepository, null);
+        this.testSubject = new RoomService(roomRepository);
     }
 
     @Test

@@ -93,9 +93,9 @@ public class RoomController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public UUID createRoom(@Valid @RequestBody CreateRoomDto createRoomDto) {
+    public CreateRoomResponseDto createRoom(@Valid @RequestBody CreateRoomDto createRoomDto) {
         Room newRoom = roomService.createRoom(createRoomDto);
-        return newRoom.getId();
+        return new CreateRoomResponseDto(newRoom.getId().toString());
     }
 
     /**
@@ -103,7 +103,7 @@ public class RoomController {
      *
      * @param roomId        Room ID
      * @param updateRoomDto Room to update
-     * @return Updated room
+     * @return 200 OK
      * @Example PUT /rooms/00000000-0000-0000-0000-000000000
      * {
      * "name": "Room 1",
@@ -115,7 +115,7 @@ public class RoomController {
     @PutMapping(path = "{roomId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public Room updateRoom(
+    public void updateRoom(
             @PathVariable("roomId") UUID roomId,
             @Valid @RequestBody UpdateRoomDto updateRoomDto
     ) {
@@ -123,7 +123,7 @@ public class RoomController {
             throw new HttpClientErrorException(
                     HttpStatus.NOT_FOUND,
                     "Room with id: '%s' not found".formatted(roomId));
-        return roomService
+        roomService
                 .updateRoom(roomId, updateRoomDto);
     }
 
