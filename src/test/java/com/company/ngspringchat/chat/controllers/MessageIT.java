@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -21,6 +22,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
         })
 @AutoConfigureMockMvc
+@AutoConfigureRestDocs(outputDir = "target/snippets")
 @DisplayName("MessageControllerTest - Integration Test")
 class MessageIT {
 
@@ -74,7 +79,13 @@ class MessageIT {
         );
         // then
         resultActions
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andDo(document("messages/post",
+                        requestFields(
+                                fieldWithPath("content").description("Message content"),
+                                fieldWithPath("sender").description("Message sender")
+                        )
+                ));
         List<Message> messages
                 = roomRepository.findById(roomId)
                 .map(Room::getMessages).orElseThrow();
